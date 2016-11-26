@@ -147,7 +147,7 @@ public class LogMgr implements Iterable<BasicLogRecord> {
    private void appendNewBlock() {
 	  setFirstRecordPosition(FIRST_POS);
       setLastRecordPosition(LAST_POS);
-      currentpos = INT_SIZE;
+      currentpos = 2 * INT_SIZE;
       currentblk = mypage.append(logfile);
    }
 
