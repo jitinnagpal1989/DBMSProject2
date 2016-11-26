@@ -1,8 +1,10 @@
 package simpledb.log;
 
 import static simpledb.file.Page.INT_SIZE;
+
+import java.util.ListIterator;
+
 import simpledb.file.*;
-import java.util.Iterator;
 
 /**
  * A class that provides the ability to move through the
@@ -10,7 +12,7 @@ import java.util.Iterator;
  * 
  * @author Edward Sciore
  */
-class LogIterator implements Iterator<BasicLogRecord> {
+class LogIterator implements ListIterator<BasicLogRecord> {
    private Block blk;
    private Page pg = new Page();
    private int currentrec;
@@ -33,7 +35,7 @@ class LogIterator implements Iterator<BasicLogRecord> {
     * @return true if there is an earlier record
     */
    public boolean hasNext() {
-      return currentrec>0 || blk.number()>0;
+      return currentrec> LogMgr.LAST_POS || blk.number()>0;
    }
    
    /**
@@ -44,7 +46,7 @@ class LogIterator implements Iterator<BasicLogRecord> {
     * @return the next earliest log record
     */
    public BasicLogRecord next() {
-      if (currentrec == 0) 
+      if (currentrec == LogMgr.LAST_POS) 
          moveToNextBlock();
       currentrec = pg.getInt(currentrec);
       return new BasicLogRecord(pg, currentrec+INT_SIZE);
@@ -63,4 +65,49 @@ class LogIterator implements Iterator<BasicLogRecord> {
       pg.read(blk);
       currentrec = pg.getInt(LogMgr.LAST_POS);
    }
+   
+   /**
+    * Moves to the next log block in forward order,
+    * and positions it after the last record in that block.
+    */
+   private void moveToPreviousBlock() {
+      blk = new Block(blk.fileName(), blk.number()+1);
+      pg.read(blk);
+      currentrec = LogMgr.LAST_POS;
+   }
+
+	@Override
+	public boolean hasPrevious() {
+		// TODO Auto-generated method stub
+		return pg.getInt(currentrec - INT_SIZE) > 0;
+	}
+	
+	@Override
+	public BasicLogRecord previous() {
+		if (!hasPrevious()) // TODO : check before moving to the next block.
+	         moveToPreviousBlock();
+		BasicLogRecord record = new BasicLogRecord(pg, currentrec + INT_SIZE);
+	    currentrec = pg.getInt(currentrec - INT_SIZE);// move
+	    return record;
+	}
+	
+	@Override
+	public int nextIndex() {
+		return currentrec - 1;
+	}
+	
+	@Override
+	public int previousIndex() {
+		return currentrec + 1; 
+	}
+	
+	@Override
+	public void set(BasicLogRecord e) {
+		throw new UnsupportedOperationException();
+	}
+	
+	@Override
+	public void add(BasicLogRecord e) {
+		throw new UnsupportedOperationException();
+	}
 }
