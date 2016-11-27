@@ -116,15 +116,24 @@ public class RecoveryMgr {
     */
    private void doRecover() {
       Collection<Integer> finishedTxs = new ArrayList<Integer>();
-      Iterator<LogRecord> iter = new LogRecordIterator();
+      Collection<Integer> commitedTxs = new ArrayList<Integer>();
+      ListIterator<LogRecord> iter = new LogRecordIterator();
       while (iter.hasNext()) {
          LogRecord rec = iter.next();
          if (rec.op() == CHECKPOINT)
             return;
+         if (rec.op() == COMMIT)
+        	commitedTxs.add(rec.txNumber());
          if (rec.op() == COMMIT || rec.op() == ROLLBACK)
             finishedTxs.add(rec.txNumber());
          else if (!finishedTxs.contains(rec.txNumber()))
             rec.undo(txnum);
+      }
+      while (iter.hasPrevious()){
+    	 LogRecord rec = iter.previous();
+    	 if(rec.op() == SETINT || rec.op() == SETSTRING)
+    		 if(commitedTxs.contains(rec.txNumber()))
+    			 rec.redo(txnum);
       }
    }
 

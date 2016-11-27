@@ -159,7 +159,7 @@ public class LogMgr implements Iterable<BasicLogRecord> {
     * is the offset of the integer for the last log record in the page.
     */
    private void finalizeRecord() {
-	  mypage.setInt(getLastRecordPosition() - INT_SIZE, currentpos);
+	  mypage.setInt(getLastRecordPosition() - INT_SIZE, currentpos + INT_SIZE);
 	  mypage.setInt(currentpos, FIRST_POS); // to make it cyclic
 	  currentpos += INT_SIZE; 
       mypage.setInt(currentpos, getLastRecordPosition());
