@@ -61,13 +61,13 @@ public class RecoveryMgr {
     * @param offset the offset of the value in the page
     * @param newval the value to be written
     */
-   public int setInt(Buffer buff, int offset, int newval) {
-      int oldval = buff.getInt(offset);
+   public int setInt(Buffer buff, int offset, int oldval ,int newval) {
+      //int oldval = buff.getInt(offset);
       Block blk = buff.block();
       if (isTempBlock(blk))
          return -1;
       else
-         return new SetIntRecord(txnum, blk, offset, oldval).writeToLog();
+         return new SetIntRecord(txnum, blk, offset, oldval, newval).writeToLog();
    }
 
    /**
@@ -75,16 +75,16 @@ public class RecoveryMgr {
     * Updates to temporary files are not logged; instead, a
     * "dummy" negative lsn is returned.
     * @param buff the buffer containing the page
-    * @param offset the offset of the value in the page
+    * @param offset the offset of the value in the pages
     * @param newval the value to be written
     */
-   public int setString(Buffer buff, int offset, String newval) {
-      String oldval = buff.getString(offset);
+   public int setString(Buffer buff, int offset, String oldVal, String newVal) {
+//      String oldval = buff.getString(offset);
       Block blk = buff.block();
       if (isTempBlock(blk))
          return -1;
       else
-         return new SetStringRecord(txnum, blk, offset, oldval).writeToLog();
+         return new SetStringRecord(txnum, blk, offset, oldVal, newVal).writeToLog();
    }
 
    /**
@@ -116,15 +116,24 @@ public class RecoveryMgr {
     */
    private void doRecover() {
       Collection<Integer> finishedTxs = new ArrayList<Integer>();
-      Iterator<LogRecord> iter = new LogRecordIterator();
-      while (iter.hasNext()) {
+      Collection<Integer> commitedTxs = new ArrayList<Integer>();
+      ListIterator<LogRecord> iter = new LogRecordIterator();
+      while (iter.hasNext()) {//undo phase
          LogRecord rec = iter.next();
          if (rec.op() == CHECKPOINT)
-            return;
+            break;//not returning because we want to continue to redo phase
+         if (rec.op() == COMMIT)
+        	commitedTxs.add(rec.txNumber());
          if (rec.op() == COMMIT || rec.op() == ROLLBACK)
             finishedTxs.add(rec.txNumber());
          else if (!finishedTxs.contains(rec.txNumber()))
             rec.undo(txnum);
+      }
+      while (iter.hasPrevious()){//redo phase
+    	 LogRecord rec = iter.previous();
+    	 if(rec.op() == SETINT || rec.op() == SETSTRING)
+    		 if(commitedTxs.contains(rec.txNumber()))
+    			 rec.redo(txnum);
       }
    }
 

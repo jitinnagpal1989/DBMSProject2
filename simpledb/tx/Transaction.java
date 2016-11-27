@@ -140,11 +140,12 @@ public class Transaction {
     * @param offset a byte offset within that block
     * @param val the value to be stored
     */
-   public void setInt(Block blk, int offset, int val) {
+   public void setInt(Block blk, int offset, int newVal) {
       concurMgr.xLock(blk);
       Buffer buff = myBuffers.getBuffer(blk);
-      int lsn = recoveryMgr.setInt(buff, offset, val);
-      buff.setInt(offset, val, txnum, lsn);
+      int oldVal = buff.getInt(offset);
+      int lsn = recoveryMgr.setInt(buff, offset, oldVal, newVal);
+      buff.setInt(offset, newVal, txnum, lsn);
    }
    
    /**
@@ -163,7 +164,8 @@ public class Transaction {
    public void setString(Block blk, int offset, String val) {
       concurMgr.xLock(blk);
       Buffer buff = myBuffers.getBuffer(blk);
-      int lsn = recoveryMgr.setString(buff, offset, val);
+      String oldString = buff.getString(offset);
+      int lsn = recoveryMgr.setString(buff, offset, oldString, val);
       buff.setString(offset, val, txnum, lsn);
    }
    
