@@ -118,10 +118,10 @@ public class RecoveryMgr {
       Collection<Integer> finishedTxs = new ArrayList<Integer>();
       Collection<Integer> commitedTxs = new ArrayList<Integer>();
       ListIterator<LogRecord> iter = new LogRecordIterator();
-      while (iter.hasNext()) {
+      while (iter.hasNext()) {//undo phase
          LogRecord rec = iter.next();
          if (rec.op() == CHECKPOINT)
-            return;
+            break;//not returning because we want to continue to redo phase
          if (rec.op() == COMMIT)
         	commitedTxs.add(rec.txNumber());
          if (rec.op() == COMMIT || rec.op() == ROLLBACK)
@@ -129,7 +129,7 @@ public class RecoveryMgr {
          else if (!finishedTxs.contains(rec.txNumber()))
             rec.undo(txnum);
       }
-      while (iter.hasPrevious()){
+      while (iter.hasPrevious()){//redo phase
     	 LogRecord rec = iter.previous();
     	 if(rec.op() == SETINT || rec.op() == SETSTRING)
     		 if(commitedTxs.contains(rec.txNumber()))
