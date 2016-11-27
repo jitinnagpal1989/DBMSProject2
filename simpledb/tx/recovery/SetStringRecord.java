@@ -80,7 +80,10 @@ class SetStringRecord implements LogRecord {
    }
    
    public void redo(int txnum) {
-	   System.out.println("String redo");
+	   BufferMgr buffMgr = SimpleDB.bufferMgr();
+       Buffer buff = buffMgr.pin(blk);
+       buff.setString(offset, newval, txnum, -1);
+       buffMgr.unpin(buff);
    }
    
 }
