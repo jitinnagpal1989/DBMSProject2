@@ -20,7 +20,8 @@ public class LogMgr implements Iterable<BasicLogRecord> {
     * The location where the pointer to the last integer in the page is.
     * A value of 0 means that the pointer is the first value in the page.
     */
-   public static final int LAST_POS = 0;
+   public static final int LAST_POS = 4;
+   public static final int FIRST_POS = 0;
 
    private String logfile;
    private Page mypage = new Page();
@@ -68,7 +69,7 @@ public class LogMgr implements Iterable<BasicLogRecord> {
     * which will be returned in reverse order starting with the most recent.
     * @see java.lang.Iterable#iterator()
     */
-   public synchronized Iterator<BasicLogRecord> iterator() {
+   public synchronized ListIterator<BasicLogRecord> iterator() {
       flush();
       return new LogIterator(currentblk);
    }
@@ -83,7 +84,7 @@ public class LogMgr implements Iterable<BasicLogRecord> {
     * @return the LSN of the final value
     */
    public synchronized int append(Object[] rec) {
-      int recsize = INT_SIZE;  // 4 bytes for the integer that points to the previous log record
+      int recsize = 2 * INT_SIZE;  // 4 bytes for the integer that points to the previous log record
       for (Object obj : rec)
          recsize += size(obj);
       if (currentpos + recsize >= BLOCK_SIZE){ // the log record doesn't fit,
@@ -144,8 +145,9 @@ public class LogMgr implements Iterable<BasicLogRecord> {
     * Clear the current page, and append it to the log file.
     */
    private void appendNewBlock() {
-      setLastRecordPosition(0);
-      currentpos = INT_SIZE;
+	  setFirstRecordPosition(FIRST_POS);
+      setLastRecordPosition(LAST_POS);
+      currentpos = 2 * INT_SIZE;
       currentblk = mypage.append(logfile);
    }
 
@@ -157,6 +159,9 @@ public class LogMgr implements Iterable<BasicLogRecord> {
     * is the offset of the integer for the last log record in the page.
     */
    private void finalizeRecord() {
+	  mypage.setInt(getLastRecordPosition() - INT_SIZE, currentpos + INT_SIZE);
+	  mypage.setInt(currentpos, FIRST_POS); // to make it cyclic
+	  currentpos += INT_SIZE; 
       mypage.setInt(currentpos, getLastRecordPosition());
       setLastRecordPosition(currentpos);
       currentpos += INT_SIZE;
@@ -168,5 +173,13 @@ public class LogMgr implements Iterable<BasicLogRecord> {
 
    private void setLastRecordPosition(int pos) {
       mypage.setInt(LAST_POS, pos);
+   }
+   
+   private int getFirstRecordPosition() {
+	  return mypage.getInt(FIRST_POS);
+   }
+
+   private void setFirstRecordPosition(int pos) {
+	  mypage.setInt(FIRST_POS, pos);
    }
 }

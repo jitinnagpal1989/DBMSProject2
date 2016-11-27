@@ -1,7 +1,8 @@
 package simpledb.tx.recovery;
 
 import static simpledb.tx.recovery.LogRecord.*;
-import java.util.Iterator;
+import java.util.ListIterator;
+
 import simpledb.log.BasicLogRecord;
 import simpledb.server.SimpleDB;
 
@@ -13,8 +14,8 @@ import simpledb.server.SimpleDB;
  * this class understands the meaning of the log records.
  * @author Edward Sciore
  */
-class LogRecordIterator implements Iterator<LogRecord> {
-   private Iterator<BasicLogRecord> iter = SimpleDB.logMgr().iterator();
+class LogRecordIterator implements ListIterator<LogRecord> {
+   private ListIterator<BasicLogRecord> iter = SimpleDB.logMgr().iterator();
    
    public boolean hasNext() {
       return iter.hasNext();
@@ -53,4 +54,55 @@ class LogRecordIterator implements Iterator<LogRecord> {
    public void remove() {
       throw new UnsupportedOperationException();
    }
+
+	@Override
+	public boolean hasPrevious() {
+		return iter.hasPrevious();
+	}
+	
+	@Override
+	public LogRecord previous() {
+		BasicLogRecord rec = iter.previous();
+	      int op = rec.nextInt();
+	      switch (op) {
+	         case CHECKPOINT:
+	            return new CheckpointRecord(rec);
+	         case START:
+	            return new StartRecord(rec);
+	         case COMMIT:
+	            return new CommitRecord(rec);
+	         case ROLLBACK:
+	            return new RollbackRecord(rec);
+	         case SETINT:
+	            return new SetIntRecord(rec);
+	         case SETSTRING:
+	            return new SetStringRecord(rec);
+	         default:
+	            return null;
+	      }
+	}
+	
+	@Override
+	public int nextIndex() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+	
+	@Override
+	public int previousIndex() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+	
+	@Override
+	public void set(LogRecord e) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void add(LogRecord e) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
 }
