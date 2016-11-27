@@ -2,6 +2,8 @@ package simpledb.tx.recovery;
 
 import static simpledb.tx.recovery.LogRecord.*;
 import java.util.Iterator;
+import java.util.ListIterator;
+
 import simpledb.log.BasicLogRecord;
 import simpledb.server.SimpleDB;
 
@@ -14,7 +16,7 @@ import simpledb.server.SimpleDB;
  * @author Edward Sciore
  */
 class LogRecordIterator implements Iterator<LogRecord> {
-   private Iterator<BasicLogRecord> iter = SimpleDB.logMgr().iterator();
+   private ListIterator<BasicLogRecord> iter = SimpleDB.logMgr().iterator();
    
    public boolean hasNext() {
       return iter.hasNext();
