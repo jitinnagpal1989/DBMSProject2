@@ -71,6 +71,8 @@ class LogIterator implements ListIterator<BasicLogRecord> {
     * and positions it after the last record in that block.
     */
    private void moveToPreviousBlock() {
+	   // TODO : check whether there is a next block
+	   // May throw a null pointer exception because of the missing check
       blk = new Block(blk.fileName(), blk.number()+1);
       pg.read(blk);
       currentrec = LogMgr.LAST_POS;
