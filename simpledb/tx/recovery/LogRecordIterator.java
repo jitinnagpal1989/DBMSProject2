@@ -14,7 +14,7 @@ import simpledb.server.SimpleDB;
  * this class understands the meaning of the log records.
  * @author Edward Sciore
  */
-class LogRecordIterator implements ListIterator<LogRecord> {
+public class LogRecordIterator implements ListIterator<LogRecord> {
    private ListIterator<BasicLogRecord> iter = SimpleDB.logMgr().iterator();
    
    public boolean hasNext() {
